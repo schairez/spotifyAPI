@@ -1,0 +1,12 @@
+# filename: config.example.toml
+[server]
+host="localhost"
+port="8000"
+
+
+[oauth2Providers]
+    [oauth2Providers.spotify]
+    clientId= "YOUR_APP_ID"
+    clientSecret= "YOUR_APP_SECRET"
+    redirectURL= "http://localhost:8000/auth/callback?provider=spotify"
+
