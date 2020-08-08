@@ -1,5 +1,4 @@
-// package spotifywork
-
+//Package auth implements the Spotify authentication client
 package auth
 
 import (
@@ -43,18 +42,27 @@ make scope groups? global const vars to a specific use case?
 
 */
 
-//NewSpotifyConfig sets up new
+//NewSpotifyConfig initalizes new client conf that uses the 3-legged oauth flow
 func NewSpotifyConfig(clientID, clientSecret, redirectURL string) *oauth2.Config {
 
 	cfg := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL,
-		Scopes:       []string{"user-read-email", "user-top-read", "user-library-read", "playlist-read-private", "user-read-recently-played", "playlist-read-private"},
-		Endpoint:     spotify.Endpoint,
+		Scopes: []string{"user-read-email", "user-top-read", "user-library-read",
+			"user-library-read", "playlist-read-collaborative", "playlist-read-private", "user-read-recently-played", "playlist-read-private"},
+		Endpoint: spotify.Endpoint,
 	}
 	return cfg
 }
+
+/*
+type SpotifyService struct {
+	config *oauth2.config,
+
+}
+
+*/
 
 //we'll want to maintain local state b/w our user-agent's request
 //and our redirection URI callback fn and prevent CSRF
@@ -118,10 +126,3 @@ func HandleSpotifyLogin(w http.ResponseWriter, r *http.Request) {
 
 //if you don't want to use a yaml config, nor use env vars. You're welcome to
 //use the exported setter here
-
-/*
-type SpotifyAuthenticator struct {
-	config *oauth2.config
-}
-
-*/

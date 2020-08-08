@@ -1,3 +1,4 @@
+// Package env handles init of our application-wide configuration.
 package env
 
 import (
@@ -23,7 +24,7 @@ type providerData struct {
 	RedirectURL  string
 }
 
-//LoadTOMLFile loads file into struct
+//LoadTOMLFile loads client credentials file into struct
 func LoadTOMLFile(fileName string) (*TomlConfig, error) {
 	var config TomlConfig
 	if _, err := toml.DecodeFile(fileName, &config); err != nil {
