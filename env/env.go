@@ -33,3 +33,11 @@ func LoadTOMLFile(fileName string) (*TomlConfig, error) {
 	return &config, nil
 
 }
+
+//TODO: verify not empty and proper length
+
+//Verify verifies that the config was encoded to the struct correctly
+// func (c *TomlConfig) Verify() error {
+// 	if c.
+
+// }

@@ -1,5 +1,4 @@
-//Package auth implements the Spotify authentication client
-package auth
+package spotifyservice
 
 import (
 	"golang.org/x/oauth2"
@@ -43,7 +42,7 @@ make scope groups? global const vars to a specific use case?
 */
 
 //NewSpotifyConfig initalizes new client conf that uses the 3-legged oauth flow
-func NewSpotifyConfig(clientID, clientSecret, redirectURL string) *oauth2.Config {
+func newSpotifyConfig(clientID, clientSecret, redirectURL string) *oauth2.Config {
 
 	cfg := &oauth2.Config{
 		ClientID:     clientID,
@@ -57,10 +56,7 @@ func NewSpotifyConfig(clientID, clientSecret, redirectURL string) *oauth2.Config
 }
 
 /*
-type SpotifyService struct {
-	config *oauth2.config,
-
-}
+switch case
 
 */
 
