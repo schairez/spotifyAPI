@@ -80,7 +80,7 @@ func NewServer(fileName string) *Server {
 func (s *Server) initCfg(fileName string) {
 	cfg, err := env.LoadTOMLFile(fileName)
 	if err != nil {
-		panic(err)
+		log.Fatal("Error loading .toml file into struct config")
 	}
 	s.cfg = cfg
 
@@ -154,6 +154,7 @@ func (s *Server) routes() {
 		if err != nil {
 			if err == http.ErrNoCookie {
 				log.Println("Error finding cookie: ", err.Error())
+				http.Redirect(w, r, "/", http.StatusUnauthorized)
 			}
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -161,8 +162,9 @@ func (s *Server) routes() {
 		log.Printf("%s=%s\r\n", oauthStateCookie.Name, oauthStateCookie.Value)
 		if r.FormValue("state") != oauthStateCookie.Value {
 			log.Println("invalid oauth2 spotify state. state_mismatch err")
+			//http.Error(w, "state_mismatch err", http.StatusUnauthorized)
 			http.Redirect(w, r, "/", http.StatusUnauthorized)
-			// http.Error(w, "Invalid State token", http.StatusBadRequest)
+
 			return
 		}
 		//TODO: pkce opts?
@@ -172,6 +174,7 @@ func (s *Server) routes() {
 		ctx := context.Background()
 		//exchange auth code with an access token
 		token, err := s.spotifyCfg.Exchange(ctx, authCode)
+
 		if err != nil {
 			log.Printf("error converting auth code into token; %s", err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -203,6 +206,19 @@ func (s *Server) routes() {
 			return
 		}
 		defer resp.Body.Close()
+
+		user := &models.SpotifyUser{}
+		if err := json.NewDecoder(resp.Body).Decode(user); err != nil {
+			log.Printf("Could not decode body: %v\n", err)
+		}
+		user.AccessToken = token.AccessToken
+		user.RefreshToken = token.RefreshToken
+		user.TokenExpiry = token.Expiry
+		user.TokenType = token.TokenType
+
+		log.Println("getting user")
+		log.Println(user)
+
 		data, _ := ioutil.ReadAll(resp.Body)
 		log.Println("Data calling user API: ", string(data))
 
@@ -214,18 +230,16 @@ func (s *Server) routes() {
 		if err != nil {
 			log.Println(err)
 		}
-		// data, _ = ioutil.ReadAll(resp.Body)
-		// defer resp.Body.Close()
-		// if resp.StatusCode != http.StatusOK {
-		// 	log.Printf("http status code %d", resp.StatusCode)
-		// }
-		// log.Println("Data calling user liked tracks API: ", string(data))
 		defer resp.Body.Close()
+		if resp.StatusCode >= http.StatusBadRequest {
+			log.Println("status code todo:return err")
+
+		}
 		tracks := &models.UserSavedTracks{}
-		err = json.NewDecoder(resp.Body).Decode(tracks)
-		if err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(tracks); err != nil {
 			log.Println(err)
 		}
+
 		log.Println("getting user trakcs")
 		log.Println(tracks)
 
@@ -265,6 +279,11 @@ we care about the track.album.artists.name
 
 t
 */
+
+//credit to uber-go guide on verifying interface compliance at compile time
+//https://github.com/uber-go/guide/blob/master/style.md#guidelines
+//this statement will fail if *Server ever stops matching the http.Handler interface
+var _ http.Handler = (*Server)(nil)
 
 /*
 A struct or object will be Handler if it has one method ServeHTTP which takes ResponseWriter and pointer to Request.

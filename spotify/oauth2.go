@@ -1,4 +1,4 @@
-package spotifyservice
+package spotify
 
 import (
 	"golang.org/x/oauth2"
@@ -10,11 +10,24 @@ import (
 The Authorization Code Flow has the following steps:
 
 Configure your application to get the Client ID and Client Secret.
-Your application directs the browser to LinkedIn's OAuth 2.0 authorization page where the member authenticates. After authentication, LinkedIn's authorization server passes an authorization code to your application.
-Your application sends this code to LinkedIn and LinkedIn returns an access token.
+Your application directs the browser to Spotify's OAuth 2.0 authorization page where the member authenticates. After authentication, Spotify's authorization server passes an authorization code to your application.
+Your application sends this code to Spotify and Spotify returns an access token.
 Your application uses this token to call APIs on behalf of the member.
 
 */
+
+//NewSpotifyConfig initalizes new client conf that uses the 3-legged oauth flow
+func newSpotifyConfig(clientID, clientSecret, redirectURL string) *oauth2.Config {
+
+	cfg := &oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  redirectURL,
+		Scopes:       []string{"user-read-email", "user-read-private", "user-top-read", "user-library-read", "playlist-read-collaborative", "playlist-read-private", "user-read-recently-played", "playlist-read-private"},
+		Endpoint:     spotify.Endpoint,
+	}
+	return cfg
+}
 
 /*
 No. Instead, the backend should set the JWT as a cookie in the user browser.
@@ -41,24 +54,24 @@ make scope groups? global const vars to a specific use case?
 
 */
 
-//NewSpotifyConfig initalizes new client conf that uses the 3-legged oauth flow
-func newSpotifyConfig(clientID, clientSecret, redirectURL string) *oauth2.Config {
+/*
 
-	cfg := &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		RedirectURL:  redirectURL,
-		Scopes: []string{"user-read-email", "user-top-read", "user-library-read",
-			"user-library-read", "playlist-read-collaborative", "playlist-read-private", "user-read-recently-played", "playlist-read-private"},
-		Endpoint: spotify.Endpoint,
-	}
-	return cfg
-}
+OAuth 2.0 (3LO) involves three parties:
+
+Spotify (resource)
+A user (resource owner)
+An external application/service (client).
+
+
+*/
 
 /*
 switch case
 
 */
+
+//good 3LO ex diagram
+//https://www.google.com/support/enterprise/static/gapps/art/admin/en/cpanel/3-legged-oauth-diagram.png
 
 //we'll want to maintain local state b/w our user-agent's request
 //and our redirection URI callback fn and prevent CSRF
