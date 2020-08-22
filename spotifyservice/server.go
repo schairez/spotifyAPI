@@ -1,3 +1,7 @@
+// Copyright 2020 Sergio Chairez. All rights reserved.
+// Use of this source code is governed by a MIT style license that can be found
+// in the LICENSE file.
+
 package spotifyservice
 
 import (
@@ -6,18 +10,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/schairez/spotifywork/models"
+	"github.com/schairez/spotifywork/spotify"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/schairez/spotifywork/env"
-	"golang.org/x/oauth2"
 )
 
 /*
@@ -64,7 +66,7 @@ func genRandStateOauthCookie(w http.ResponseWriter) string {
 //Server is the component of our app
 type Server struct {
 	cfg        *env.TomlConfig
-	spotifyCfg *oauth2.Config
+	client     *spotify.Client
 	router     *chi.Mux
 	httpServer *http.Server
 }
@@ -73,7 +75,7 @@ type Server struct {
 func NewServer(fileName string) *Server {
 	s := &Server{}
 	s.initCfg(fileName)
-	s.initSpotifyCfg()
+	s.initClient()
 	s.routes()
 	return s
 }
@@ -89,16 +91,16 @@ func (s *Server) initCfg(fileName string) {
 
 }
 
-func (s *Server) initSpotifyCfg() {
-	spotify, ok := s.cfg.Oauth2Providers["spotify"]
+func (s *Server) initClient() {
+	cfg, ok := s.cfg.Oauth2Providers["spotify"]
 	if !ok {
 		// TODO: Properly handle error
 		panic("Spotify env properties not found in config")
 	}
-	s.spotifyCfg = newSpotifyConfig(
-		spotify.ClientID,
-		spotify.ClientSecret,
-		spotify.RedirectURL)
+	s.client = spotify.NewClient(
+		cfg.ClientID,
+		cfg.ClientSecret,
+		cfg.RedirectURL)
 }
 
 //routes inits the route multiplexer with the assigned routes
@@ -137,7 +139,7 @@ func (s *Server) routes() {
 		localState := genRandStateOauthCookie(w)
 		fmt.Println(localState)
 		fmt.Println(w.Header())
-		authURL := s.spotifyCfg.AuthCodeURL(localState)
+		authURL := s.client.Config.AuthCodeURL(localState)
 		//app directs user-agent to spotify's oauth2 auth  consent page
 		http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 
@@ -177,7 +179,7 @@ func (s *Server) routes() {
 		//TODO: diff b/w background and oauth2.NoContext
 		ctx := context.Background()
 		//exchange auth code with an access token
-		token, err := s.spotifyCfg.Exchange(ctx, authCode)
+		token, err := s.client.Config.Exchange(ctx, authCode)
 
 		if err != nil {
 			log.Printf("error converting auth code into token; %s", err.Error())
@@ -203,48 +205,46 @@ func (s *Server) routes() {
 		//now we can use this token to call Spotify APIs on behalf of the user
 		//use the token to get an authenticated client
 		//the underlying transport obtained using ctx?
-		client := s.spotifyCfg.Client(context.Background(), token)
-		resp, err := client.Get("https://api.spotify.com/v1/me")
+		user, err := s.client.GetUserProfileRequest(context.Background(), token)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer resp.Body.Close()
-
-		user := &models.SpotifyUser{}
-		if err := json.NewDecoder(resp.Body).Decode(user); err != nil {
-			log.Printf("Could not decode body: %v\n", err)
-		}
-		user.AccessToken = token.AccessToken
-		user.RefreshToken = token.RefreshToken
-		user.TokenExpiry = token.Expiry
-		user.TokenType = token.TokenType
-
 		log.Println("getting user")
-		log.Println(user)
+		log.Printf("%+v\n", user)
 
-		data, _ := ioutil.ReadAll(resp.Body)
-		log.Println("Data calling user API: ", string(data))
-
-		req, err := getLikedTracksRequest(10, 0)
+		// data, _ := ioutil.ReadAll(resp.Body)
+		// log.Println("Data calling user API: ", string(data))
+		limit := 50
+		offset := 0
+		market := "us"
+		params := spotify.QParams{Limit: &limit, Offset: &offset, Market: &market}
+		tracks, err := s.client.GetUserSavedTracks(context.Background(), token, &params)
 		if err != nil {
-			log.Println("error with reqeuest")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
-		resp, err = client.Do(req)
-		if err != nil {
-			log.Println(err)
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode >= http.StatusBadRequest {
-			log.Println("status code todo:return err")
+		log.Println("getting user tracks")
+		log.Printf("%+v\n", tracks)
+		// req, err := getLikedTracksRequest(10, 0)
+		// if err != nil {
+		// 	log.Println("error with reqeuest")
+		// }
+		// resp, err = client.Do(req)
+		// if err != nil {
+		// 	log.Println(err)
+		// }
+		// defer resp.Body.Close()
+		// if resp.StatusCode >= http.StatusBadRequest {
+		// 	log.Println("status code todo:return err")
 
-		}
-		tracks := &models.UserSavedTracks{}
-		if err := json.NewDecoder(resp.Body).Decode(tracks); err != nil {
-			log.Println(err)
-		}
+		// }
+		// tracks := &models.UserSavedTracks{}
+		// if err := json.NewDecoder(resp.Body).Decode(tracks); err != nil {
+		// 	log.Println(err)
+		// }
 
-		log.Println("getting user trakcs")
+		log.Println("getting user tracks")
 		log.Println(tracks)
 
 	})

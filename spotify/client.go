@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 	"net/url"
 	"strconv"
 
@@ -15,37 +16,43 @@ import (
 	"golang.org/x/oauth2"
 )
 
-//SpotifyServiceClient wraps the oauth2 config so we
+//Client wraps the oauth2 config so we
 // can extend methods specific to spotify"s api
-type spotifyServiceClient struct {
-	config *oauth2.Config
-	api    *APIEndpoints
+type Client struct {
+	Config *oauth2.Config
+	API    *APIEndpoints
 }
 
-//NewSpotifyServiceClient gives us a ServiceClient to wrap the ouath2 config and api endpoints for our client requests
-func newSpotifyServiceClient(clientID, clientSecret, redirectURL string) *spotifyServiceClient {
+//NewClient gives us a ServiceClient to wrap the ouath2 config and api endpoints for our client requests
+func NewClient(clientID, clientSecret, redirectURL string) *Client {
 	_api, err := NewAPI()
 	if err != nil {
 		log.Fatalf("Err building api endpoints %v", err)
 	}
-	s := &spotifyServiceClient{
-		config: newSpotifyConfig(clientID, clientSecret, redirectURL),
-		api:    _api}
+	s := &Client{
+		Config: newSpotifyConfig(clientID, clientSecret, redirectURL),
+		API:    _api}
 	return s
 
 }
 
-func (s *spotifyServiceClient) getUserProfileRequest(ctx context.Context, token *oauth2.Token) (*models.SpotifyUser, error) {
-	var endpoint *url.URL = s.api.UserProfileURL
+//GetUserProfileRequest calls the https://api.spotify.com/v1/me
+//endpoint and gives us useful info about the user
+func (s *Client) GetUserProfileRequest(ctx context.Context, token *oauth2.Token) (*models.SpotifyUser, error) {
+	var endpoint *url.URL = s.API.UserProfileURL
 	url := endpoint.String()
 	log.Printf("user profile url: %v\n", url)
 
 	user := &models.SpotifyUser{}
 
-	client := s.config.Client(ctx, token)
-	resp, err := client.Get(url)
+	httpClient := s.Config.Client(ctx, token)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		log.Println("status code todo:return err")
+
 	}
 	defer resp.Body.Close()
 	if err := json.NewDecoder(resp.Body).Decode(user); err != nil {
@@ -60,7 +67,7 @@ func (s *spotifyServiceClient) getUserProfileRequest(ctx context.Context, token 
 }
 
 //QParams holds the optional qparams for the api calls
-type qParams struct {
+type QParams struct {
 	Limit  *int    //The maximum number of objects to return. Default: 20. Minimum: 1. Maximum: 50
 	Offset *int    //The index of the first object to return. Default: 0
 	Market *string //An ISO 3166-1 alpha-2 country code; for track-relinking
@@ -96,6 +103,8 @@ func validMarketOpt(m string) bool {
 	return false
 }
 
+// req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", provider.Token))
+
 /*
 below takes into account pagination; we want to retrieve up to the
 10,000 saved tracks; (still in progress)
@@ -108,8 +117,12 @@ below takes into account pagination; we want to retrieve up to the
 //is this concurrent safe? using global variables?
 // limit Default: 20. Minimum: 1. Maximum: 50
 
-func (s *spotifyServiceClient) getUserSavedTracks(ctx context.Context, token *oauth2.Token, q *qParams) {
-	var endpoint *url.URL = s.api.UserSavedTracksURL
+//GetUserSavedTracks calls the https://api.spotify.com/v1/me/tracks
+//endpoint with the params and gives us the user's saved tracks in their library
+func (s *Client) GetUserSavedTracks(ctx context.Context, token *oauth2.Token, q *QParams) (*models.UserSavedTracks, error) {
+	var endpoint *url.URL = s.API.UserSavedTracksURL
+	log.Println("SAME ADDRESS ?????")
+	log.Println(&endpoint == &s.API.UserSavedTracksURL)
 	if q != nil {
 		params := url.Values{}
 		if q.Limit != nil {
@@ -131,12 +144,34 @@ func (s *spotifyServiceClient) getUserSavedTracks(ctx context.Context, token *oa
 				params.Set("market", *(q).Market)
 			}
 		}
-		// params.Add("offset", "1")
+
 		endpoint.RawQuery = params.Encode()
 	}
-	// return endpoint.String()
+	url := endpoint.String()
+	log.Println(url)
+	log.Printf("User saved tracks url: %v\n", url)
+
+	tracks := &models.UserSavedTracks{}
+
+	httpClient := s.Config.Client(ctx, token)
+	resp, err := httpClient.Get(url)
+	if resp.StatusCode >= http.StatusBadRequest {
+		log.Println("status code todo:return err")
+
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if err := json.NewDecoder(resp.Body).Decode(tracks); err != nil {
+		log.Printf("Could not decode body: %v\n", err)
+		return nil, err
+	}
+
+	return tracks, nil
+
 }
 
-func tracksQuery(limit string) {
+// func tracksQuery(limit string) {
 
-}
+// }
