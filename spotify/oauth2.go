@@ -23,8 +23,10 @@ func newSpotifyConfig(clientID, clientSecret, redirectURL string) *oauth2.Config
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL,
-		Scopes:       []string{"user-read-email", "user-read-private", "user-top-read", "user-library-read", "playlist-read-collaborative", "playlist-read-private", "user-read-recently-played", "playlist-read-private"},
-		Endpoint:     spotify.Endpoint,
+		Scopes: []string{"user-read-email", "user-read-private", "user-top-read", "user-library-read",
+			"playlist-read-collaborative", "playlist-read-private", "user-read-recently-played",
+			"playlist-read-private"},
+		Endpoint: spotify.Endpoint,
 	}
 	return cfg
 }

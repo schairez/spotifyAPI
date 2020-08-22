@@ -1,3 +1,7 @@
+// Copyright 2020 Sergio Chairez. All rights reserved.
+// Use of this source code is governed by a MIT style license that can be found
+// in the LICENSE file.
+
 package spotify
 
 import (
@@ -63,20 +67,16 @@ type qParams struct {
 	// queryParams map[string]string
 }
 
-func validLimitOpt(l int) bool {
-	validRange := (l >= 1) && (l <= 50)
-	if validRange {
-		return true
-	}
-	return false
-}
-
 //countries spotify is available in
 //TODO: expand to use all the ISO country codes from this link
 //https://support.spotify.com/us/article/full-list-of-territories-where-spotify-is-available/
 
 var (
-	markets = [...]string{"ad", "ar", "at", "au", "be", "bg", "bo", "br", "ca", "ch", "cl", "co", "cr", "cy", "cz", "de", "dk", "do", "ec", "ee", "es", "fi", "fr", "gb", "gr", "gt", "hk", "hn", "hu", "id", "ie", "is", "it", "jp", "li", "lt", "lu", "lv", "mc", "mt", "mx", "my", "ni", "nl", "no", "nz", "pa", "pe", "ph", "pl", "pt", "py", "se", "sg", "sk", "sv", "tr", "tw", "us", "uy"}
+	markets = [...]string{"ad", "ar", "at", "au", "be", "bg", "bo", "br", "ca", "ch",
+		"cl", "co", "cr", "cy", "cz", "de", "dk", "do", "ec", "ee", "es", "fi", "fr",
+		"gb", "gr", "gt", "hk", "hn", "hu", "id", "ie", "is", "it", "jp", "li", "lt",
+		"lu", "lv", "mc", "mt", "mx", "my", "ni", "nl", "no", "nz", "pa", "pe", "ph",
+		"pl", "pt", "py", "se", "sg", "sk", "sv", "tr", "tw", "us", "uy"}
 )
 
 func inMarketsArr(m string) bool {
@@ -88,7 +88,8 @@ func inMarketsArr(m string) bool {
 	return false
 }
 func validMarketOpt(m string) bool {
-	validLen := len(m) == 2
+	n := len(m)
+	validLen := n == 2
 	if validLen && inMarketsArr(m) {
 		return true
 	}
@@ -113,7 +114,8 @@ func (s *spotifyServiceClient) getUserSavedTracks(ctx context.Context, token *oa
 		params := url.Values{}
 		if q.Limit != nil {
 			l := *(q).Limit
-			if validLimitOpt(l) {
+			valid := (l >= 1) && (l <= 50)
+			if valid {
 				params.Set("limit", strconv.Itoa(l))
 			}
 		}
@@ -132,6 +134,7 @@ func (s *spotifyServiceClient) getUserSavedTracks(ctx context.Context, token *oa
 		// params.Add("offset", "1")
 		endpoint.RawQuery = params.Encode()
 	}
+	// return endpoint.String()
 }
 
 func tracksQuery(limit string) {

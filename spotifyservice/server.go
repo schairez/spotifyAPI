@@ -48,10 +48,13 @@ func genRandStateOauthCookie(w http.ResponseWriter) string {
 
 	//httpOnly security flag to secure our cookie from XSS; no js scripting
 	cookie := http.Cookie{
-		Name:     stateCookieName,
-		Value:    state,
-		Expires:  expiration,
-		HttpOnly: true}
+		Name:  stateCookieName,
+		Value: state,
+		// Secure:   true,
+		HttpOnly: true,
+		// SameSite: http.SameSiteLaxMode,
+		Expires: expiration,
+	}
 	//setting the set-Cookie header in the writer
 	//NOTE: headers need to be set before anything else set to the writer
 	http.SetCookie(w, &cookie)
@@ -111,6 +114,7 @@ func (s *Server) routes() {
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
 	}).Handler)
 	s.router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("pong"))
 	})
 
