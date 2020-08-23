@@ -1,4 +1,4 @@
-package spotify
+package spotifyapi
 
 import (
 	"net/url"

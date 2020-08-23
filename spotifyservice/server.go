@@ -19,7 +19,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/schairez/spotifywork/env"
 	"github.com/schairez/spotifywork/internal"
-	"github.com/schairez/spotifywork/spotify"
+	"github.com/schairez/spotifywork/spotifyservice/spotifyapi"
 )
 
 /*
@@ -45,7 +45,7 @@ func genRandState() string {
 //Server is the component of our app
 type Server struct {
 	cfg        *env.TomlConfig
-	client     *spotify.Client
+	client     *spotifyapi.Client
 	router     *chi.Mux
 	httpServer *http.Server
 }
@@ -76,7 +76,7 @@ func (s *Server) initClient() {
 		// TODO: Properly handle error
 		panic("Spotify env properties not found in config")
 	}
-	s.client = spotify.NewClient(
+	s.client = spotifyapi.NewClient(
 		cfg.ClientID,
 		cfg.ClientSecret,
 		cfg.RedirectURL)
@@ -196,7 +196,7 @@ func (s *Server) routes() {
 		limit := 50
 		offset := 0
 		market := "us"
-		params := spotify.QParams{Limit: &limit, Offset: &offset, Market: &market}
+		params := spotifyapi.QParams{Limit: &limit, Offset: &offset, Market: &market}
 		tracks, err := s.client.GetUserSavedTracks(context.Background(), token, &params)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

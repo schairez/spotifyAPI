@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT style license that can be found
 // in the LICENSE file.
 
-package spotify
+package spotifyapi
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/schairez/spotifywork/spotify/models"
+	"github.com/schairez/spotifywork/spotifyservice/spotifyapi/models"
 	"golang.org/x/oauth2"
 )
 
