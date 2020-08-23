@@ -14,12 +14,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/schairez/spotifywork/spotify"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/schairez/spotifywork/env"
+	"github.com/schairez/spotifywork/internal"
+	"github.com/schairez/spotifywork/spotify"
 )
 
 /*
@@ -31,35 +31,14 @@ import (
 
 const stateCookieName = "oauthState"
 
-//returns a base64 encoded random 32 byte string and sets a cookie on user's browser with this field
-func genRandStateOauthCookie(w http.ResponseWriter) string {
-	log.Println("generating cookie")
-	b := make([]byte, 32)
+func genRandState() string {
+	log.Println("generating rand bytes")
+	bytes := make([]byte, 32)
 	// rand.Read(b)
-	if _, err := rand.Read(b); err != nil {
-		log.Fatalf("failed to read rand fn")
+	if _, err := rand.Read(bytes); err != nil {
+		log.Fatalf("failed to read rand fn %v", err)
 	}
-
-	state := base64.StdEncoding.EncodeToString(b)
-	//TODO: suitable expiration time
-	// expire in 1 month;
-	// expiration := time.Now().Add(30 * 24 * time.Hour)
-	//or expire in 24 hours
-	//expiration := time.Now().Add(24 * time.Hour)
-	expiration := time.Now().Add(time.Hour)
-
-	//httpOnly security flag to secure our cookie from XSS; no js scripting
-	cookie := http.Cookie{
-		Name:  stateCookieName,
-		Value: state,
-		// Secure:   true,
-		HttpOnly: true,
-		// SameSite: http.SameSiteLaxMode,
-		Expires: expiration,
-	}
-	//setting the set-Cookie header in the writer
-	//NOTE: headers need to be set before anything else set to the writer
-	http.SetCookie(w, &cookie)
+	state := base64.StdEncoding.EncodeToString(bytes)
 	return state
 }
 
@@ -121,7 +100,6 @@ func (s *Server) routes() {
 	})
 
 	s.router.Get("/auth", func(w http.ResponseWriter, r *http.Request) {
-
 		//ctx := r.Context()
 		//check if the request contains a cookie?
 		//COOKIE would be attached if the use has hit our domain
@@ -130,13 +108,13 @@ func (s *Server) routes() {
 		log.Println("checking if user already has a cookie stored in their browser")
 		cookie, err := r.Cookie(stateCookieName)
 		if err != nil {
-			log.Println("we got no cookie in request")
-			log.Println(err)
+			log.Printf("we got no cookie in request, %s", err)
 		}
-
 		fmt.Println(cookie)
-
-		localState := genRandStateOauthCookie(w)
+		localState := genRandState()
+		//setting the set-Cookie header in the writer
+		//NOTE: headers need to be set before anything else set to the writer
+		http.SetCookie(w, internal.NewCookie(stateCookieName, localState))
 		fmt.Println(localState)
 		fmt.Println(w.Header())
 		authURL := s.client.Config.AuthCodeURL(localState)
@@ -226,26 +204,6 @@ func (s *Server) routes() {
 		}
 		log.Println("getting user tracks")
 		log.Printf("%+v\n", tracks)
-		// req, err := getLikedTracksRequest(10, 0)
-		// if err != nil {
-		// 	log.Println("error with reqeuest")
-		// }
-		// resp, err = client.Do(req)
-		// if err != nil {
-		// 	log.Println(err)
-		// }
-		// defer resp.Body.Close()
-		// if resp.StatusCode >= http.StatusBadRequest {
-		// 	log.Println("status code todo:return err")
-
-		// }
-		// tracks := &models.UserSavedTracks{}
-		// if err := json.NewDecoder(resp.Body).Decode(tracks); err != nil {
-		// 	log.Println(err)
-		// }
-
-		log.Println("getting user tracks")
-		log.Println(tracks)
 
 	})
 

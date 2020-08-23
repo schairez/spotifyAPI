@@ -121,25 +121,27 @@ below takes into account pagination; we want to retrieve up to the
 //endpoint with the params and gives us the user's saved tracks in their library
 func (s *Client) GetUserSavedTracks(ctx context.Context, token *oauth2.Token, q *QParams) (*models.UserSavedTracks, error) {
 	var endpoint *url.URL = s.API.UserSavedTracksURL
+	//in go structs containing primitive types are copied by value
+	//https://stackoverflow.com/questions/51635766/how-do-i-copy-a-struct-in-golang
 	log.Println("SAME ADDRESS ?????")
 	log.Println(&endpoint == &s.API.UserSavedTracksURL)
 	if q != nil {
 		params := url.Values{}
 		if q.Limit != nil {
-			l := *(q).Limit
+			var l int = *(q).Limit
 			valid := (l >= 1) && (l <= 50)
 			if valid {
 				params.Set("limit", strconv.Itoa(l))
 			}
 		}
 		if q.Offset != nil {
-			offset := *(q).Offset
+			var offset int = *(q).Offset
 			if offset > 0 {
 				params.Set("offset", strconv.Itoa(offset))
 			}
 		}
 		if q.Market != nil {
-			m := *(q).Market
+			var m string = *(q).Market
 			if validMarketOpt(m) {
 				params.Set("market", *(q).Market)
 			}
