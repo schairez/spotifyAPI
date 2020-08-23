@@ -220,6 +220,11 @@ func (s *Server) routes() {
 
 }
 
+/*
+fn that takes a Spotify URI, parses it with strings lib
+
+*/
+
 //401 err when no token provided
 
 /*

@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/schairez/spotifywork/models"
+	"github.com/schairez/spotifywork/spotify/models"
 	"golang.org/x/oauth2"
 )
 

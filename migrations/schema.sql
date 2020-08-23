@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     image_url TEXT NOT NULL UNIQUE,
     num_followers INT NOT NULL DEFAULT 0,
-    country VARCHAR(2) NOT NULL,
+    country_code VARCHAR(2) NOT NULL,
     created_at timestamptz NOT NULL,
     updated_at timestamptz NOT NULL
 );
@@ -40,3 +40,4 @@ CREATE TABLE IF NOT EXISTS artists(
     id SERIAL PRIMARY KEY,
     artist TEXT NOT NULL
 );
+-- year of track? yeaar of album? duration?
