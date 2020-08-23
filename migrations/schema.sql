@@ -1,3 +1,4 @@
+CREATE TYPE provider_type AS ENUM ('SPOTIFY', 'YOUTUBE');
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -10,7 +11,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at timestamptz NOT NULL,
     updated_at timestamptz NOT NULL
 );
-CREATE TYPE provider_type AS ENUM ('SPOTIFY', 'YOUTUBE');
 CREATE TYPE album_type AS ENUM ('ALBUM', 'SINGLE');
 CREATE TABLE IF NOT EXISTS likedsongs (
     id SERIAL PRIMARY KEY,
@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS songs(
     id SERIAL PRIMARY KEY,
     song_name TEXT,
     popularity INT CHECK (
-        testing > 0
-        AND testing < 100
+        popularity > 0
+        AND popularity < 100
     )
 );
 CREATE TABLE IF NOT EXISTS albums(
