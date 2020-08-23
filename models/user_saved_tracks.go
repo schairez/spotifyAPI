@@ -16,10 +16,10 @@ type Item struct {
 			Artists   []struct {
 				Name string `json:"name"`
 			}
-		}
+		} `json:"album"`
 		Name       string `json:"name"`
 		Popularity int    `json:"popularity"`
 		PreviewURL string `json:"preview_url"`
 		URI        string `json:"uri"`
-	}
+	} `json:"track"`
 }

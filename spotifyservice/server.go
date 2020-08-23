@@ -203,7 +203,12 @@ func (s *Server) routes() {
 			return
 		}
 		log.Println("getting user tracks")
-		log.Printf("%+v\n", tracks)
+		b, err := json.MarshalIndent(*tracks, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Print(string(b))
+		// log.Printf("%+v\n", tracks)
 
 	})
 
