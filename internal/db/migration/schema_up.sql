@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     image_url TEXT NOT NULL UNIQUE,
     num_followers INT NOT NULL DEFAULT 0,
     country_code VARCHAR(2) NOT NULL,
-    created_at timestamptz NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT (now()),
     updated_at timestamptz NOT NULL
 );
 CREATE TYPE album_type AS ENUM ('ALBUM', 'SINGLE');
@@ -31,12 +31,12 @@ CREATE TABLE IF NOT EXISTS songs(
         AND popularity < 100
     )
 );
-CREATE TABLE IF NOT EXISTS albums(
+CREATE TABLE IF NOT EXISTS "albums"(
     id SERIAL PRIMARY KEY,
     album_name TEXT NOT NULL,
     album_type album_type NOT NULL DEFAULT 'ALBUM'
 );
-CREATE TABLE IF NOT EXISTS artists(
+CREATE TABLE IF NOT EXISTS "artists"(
     id SERIAL PRIMARY KEY,
     artist TEXT NOT NULL
 );

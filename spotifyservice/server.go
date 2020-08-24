@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -85,22 +87,42 @@ func (s *Server) initClient() {
 //routes inits the route multiplexer with the assigned routes
 func (s *Server) routes() {
 	s.router = chi.NewRouter()
-	s.router.Use(middleware.RequestID)
-	s.router.Use(middleware.RealIP)
-	s.router.Use(middleware.Logger)
-	s.router.Use(middleware.Recoverer)
-	s.router.Use(middleware.StripSlashes)
-	s.router.Use(middleware.Timeout(60 * time.Second))
-	s.router.Use(cors.New(cors.Options{
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-	}).Handler)
-	s.router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("pong"))
+
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	})
+	s.router.Use(
+		middleware.Logger,       // Log API request calls
+		middleware.StripSlashes, // Strip slashes to no slash URL versions
+		middleware.RealIP,
+		middleware.Recoverer, // Recover from panics without crashing server
+		cors.Handler,         // Enable CORS globally
+	)
+	// Index handler
+	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi"))
 	})
 
+	//test connection
+	s.router.Get("/ping", s.handlePing) //GET /ping
+
+	s.router.Get("/", s.handleHome)
+
+	//serve static files
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "data"))
+	FileServer(s.router, "/templates", filesDir)
+
+	//account signin with Spotify
+	// s.router.Get("/accounts/signup")
+
 	s.router.Get("/auth", func(w http.ResponseWriter, r *http.Request) {
-		//ctx := r.Context()
+		ctx := r.Context()
+		log.Println(ctx)
 		//check if the request contains a cookie?
 		//COOKIE would be attached if the use has hit our domain
 		//this would indicate that a user-agent has hit this endpoint, but not
@@ -314,27 +336,6 @@ func writeJSONResponse(w http.ResponseWriter, status int, data []byte) {
 	w.Write(data)
 }
 */
-
-/*
-func handleOauthSpotifyLogin(spotifyCfg *oauth2.Config) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Take the context out from the request
-		ctx := r.Context()
-		localState := genRandStateOauthCookie(w)
-		fmt.Println(localState)
-		fmt.Println(w.Header())
-		authURL := spotifyCfg.AuthCodeURL(localState)
-		//app directs user-agent to spotify's oauth2 auth page
-		http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
-
-		// Call your original http.Handler
-		// h.ServeHTTP(w, r)
-
-	})
-
-}
-*/
-// func oauthSpotifyCallback()
 
 /*
 

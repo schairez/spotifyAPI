@@ -1,0 +1,33 @@
+
+{{define "login" }}
+
+ 
+<!doctype html>
+<html>
+<head>
+    <title>Oauth2 login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"> <!-- load bulma css -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> <!-- load fontawesome -->
+    <style>
+        body        { padding-top:70px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="jumbotron text-center text-success">
+        <h1><span class="fa fa-lock"></span> Social Authentication</h1>
+        <p>Login or Register with:</p>
+        <a href="/auth?provider=spotify" class="btn btn-danger"><span class="fa fa-spotify"></span> SigIn with spotify</a>
+           {{/* <a href="/auth?provider=github" class="btn btn-danger"><span class="fa fa-google"></span> SignIn with Github</a>
+              <a href="/auth?provider=facebook" class="btn btn-danger"><span class="fa fa-google"></span> SignIn with Facebook</a> */}}
+                  
+
+
+    </div>
+</div>
+</body>
+</html>
+
+
+{{end}}
+
