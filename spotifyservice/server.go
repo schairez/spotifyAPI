@@ -9,13 +9,9 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/cors"
 	"github.com/schairez/spotifywork/env"
 	"github.com/schairez/spotifywork/spotifyservice/spotifyapi"
 )
@@ -80,88 +76,6 @@ func (s *Server) initClient() {
 		cfg.RedirectURL)
 }
 
-//routes inits the route multiplexer with the assigned routes
-func (s *Server) routes() {
-	s.router = chi.NewRouter()
-
-	cors := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	})
-	s.router.Use(
-		middleware.Logger,       // Log API request calls
-		middleware.StripSlashes, // Strip slashes to no slash URL versions
-		middleware.RealIP,
-		middleware.Recoverer, // Recover from panics without crashing server
-		cors.Handler,         // Enable CORS globally
-	)
-	// Index handler
-	//TODO: setup home page
-	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hi"))
-	})
-
-	//test connection
-	s.router.Get("/ping", s.handlePing()) //GET /ping
-	//home
-	s.router.Get("/login", s.handleLoginPage())
-
-	//serve static files
-	workDir, _ := os.Getwd()
-	filesDir := http.Dir(filepath.Join(workDir, "data"))
-	FileServer(s.router, "/templates", filesDir)
-
-	//account signin with Spotify
-	// s.router.Get("/accounts/signup")
-	// s.router.Mo
-	s.router.Get("/auth", s.handleOauthProviderLogin())
-	//below we have our redirect callback as a result of a user-agent accessing
-	//our /auth endpoint route
-	s.router.Get("/auth/callback", s.handleOauthProviderCallback())
-
-	s.router.Get("/logout/{provider}", func(w http.ResponseWriter, r *http.Request) {
-
-		w.Header().Set("Location", "/")
-		w.WriteHeader(http.StatusTemporaryRedirect)
-	})
-
-}
-
-/*
-fn that takes a Spotify URI, parses it with strings lib
-
-*/
-
-//401 err when no token provided
-
-/*
-{
-  "error": {
-    "status": 401,
-    "message": "No token provided"
-  }
-}
-
-*/
-
-/*
-
-doc: https://developer.spotify.com/documentation/web-api/reference/library/get-users-saved-tracks/
-Endpoint:
-GET /v1/me/tracks
-NOTE:
-- we can receive up to 10,000  of user's liked tracks (limit user can save)
-TODO:
-limit max 50, min 1, default 20
-0ffset 0
-we care about the track.album.artists.name
-
-t
-*/
-
 /*
 Note:
 A struct or object will be http.Handler if it has one method
@@ -201,6 +115,38 @@ func (s *Server) Start() {
 func (s *Server) Shutdown() {
 
 }
+
+/*
+fn that takes a Spotify URI, parses it with strings lib
+
+*/
+
+//401 err when no token provided
+
+/*
+{
+  "error": {
+    "status": 401,
+    "message": "No token provided"
+  }
+}
+
+*/
+
+/*
+
+doc: https://developer.spotify.com/documentation/web-api/reference/library/get-users-saved-tracks/
+Endpoint:
+GET /v1/me/tracks
+NOTE:
+- we can receive up to 10,000  of user's liked tracks (limit user can save)
+TODO:
+limit max 50, min 1, default 20
+0ffset 0
+we care about the track.album.artists.name
+
+t
+*/
 
 /*
 ex:

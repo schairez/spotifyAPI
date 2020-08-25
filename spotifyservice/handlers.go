@@ -40,6 +40,8 @@ TODO:
 - CREATE A /profile route, add session middleware
 */
 
+//setting state cookie and redirecting user to resource server
+// so user-agent can authorize our app
 func (s *Server) handleOauthProviderLogin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -96,6 +98,8 @@ func (s *Server) handleOauthProviderCallback() http.HandlerFunc {
 			return
 		}
 		//TODO: pkce opts?
+		//getting the request code token
+		//which if succesful we'll exchange for an access token
 		authCode := r.FormValue("code")
 		if authCode == "" {
 			w.Write([]byte("No code"))
